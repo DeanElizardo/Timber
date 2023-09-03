@@ -9,6 +9,21 @@ int main()
 	// and a style parameter
 	sf::RenderWindow window(vm, "Timber!!!", sf::Style::Fullscreen);
 
+	// Create a texture object to hold a graphic on the GPU in memory
+	sf::Texture textureBackground;
+
+	// Load a graphic into the texture
+	textureBackground.loadFromFile("graphics/background.png");
+
+	// Create a sprite
+	sf::Sprite spriteBackground;
+
+	// Attach the texture to the sprite
+	spriteBackground.setTexture(textureBackground);
+
+	// Set the spriteBackground to cover the screen
+	spriteBackground.setPosition(0, 0);
+
 	// Primary game loop
 	while (window.isOpen())
 	{
@@ -38,6 +53,7 @@ int main()
 		window.clear();
 
 		// Draw the newly updated scene here
+		window.draw(spriteBackground);
 
 		// Show the updated scene
 		window.display();
