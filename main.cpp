@@ -50,7 +50,7 @@ int main()
 	// Bee ////////////////////////////////////////////////////////////////////
 	sf::Sprite spriteBee;
 	spriteBee.setTexture(textureBee);
-	spriteBee.setPosition(0, 800);
+	spriteBee.setPosition(2000, 800);
 
 	// Clouds /////////////////////////////////////////////////////////////////
 	//
@@ -65,9 +65,9 @@ int main()
 	spriteCloud2.setTexture(textureCloud);
 	spriteCloud3.setTexture(textureCloud);
 
-	spriteCloud1.setPosition(0, 0);
-	spriteCloud2.setPosition(0, 250);
-	spriteCloud3.setPosition(0, 500);
+	spriteCloud1.setPosition(-700, 0);
+	spriteCloud2.setPosition(-700, 250);
+	spriteCloud3.setPosition(-700, 500);
 
 	/*
 	***************************************************************************
@@ -77,6 +77,8 @@ int main()
 
 	// Timing /////////////////////////////////////////////////////////////////
 	sf::Clock clock;
+
+	bool paused = true;
 
 	// Bee ////////////////////////////////////////////////////////////////////
 
@@ -120,148 +122,156 @@ int main()
 			window.close();
 		}
 
-		/*
-		***********************************************************************
-		* Update the scene
-		***********************************************************************
-		*/
-
-		sf::Time dt = clock.restart();
-
-		// Bee Animation //////////////////////////////////////////////////////
-
-		// Set up Bee animation on first execution of game loop
-		if (!beeActive)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
 		{
-			// Set Bee speed
-			srand((int)time(0)); //............................................Seed random number generator with current system time
-			beeSpeed = (rand() % 200) + 200;
-
-			// Set Bee's origin for y-axis
-			srand((int)time(0) * 10);
-			float height = (rand() % 500) + 500;
-			spriteBee.setPosition(2000, height); //............................The bee starts off the right-hand side of the screen
-
-			// Set Bee Occillation Trigger
-			srand((int)time(0) * 10);
-			beeHeightOccilationTrigger = rand() % (vm.width + 1);
-
-			beeActive = true;
+			paused = !paused;
 		}
-		else // After first game loop, make the bee move
+
+		if (!paused)
 		{
-			// Bees always fly left
-			float beeNewXCoordinate = spriteBee.getPosition().x - (beeSpeed * dt.asSeconds());
+			/*
+			***********************************************************************
+			* Update the scene
+			***********************************************************************
+			*/
 
+			sf::Time dt = clock.restart();
 
-			// Make the bee oscillate up and down at random
-			float beeNewYCoordinate;
-			if (beeHeightOccillationCounter % beeHeightOccilationTrigger == 0)
+			// Bee Animation //////////////////////////////////////////////////////
+
+			// Set up Bee animation on first execution of game loop
+			if (!beeActive)
 			{
-				beeGoUp = !beeGoUp;
+				// Set Bee speed
+				srand((int)time(0)); //............................................Seed random number generator with current system time
+				beeSpeed = (rand() % 200) + 200;
+
+				// Set Bee's origin for y-axis
+				srand((int)time(0) * 10);
+				float height = (rand() % 500) + 500;
+				spriteBee.setPosition(2000, height); //............................The bee starts off the right-hand side of the screen
+
+				// Set Bee Occillation Trigger
+				srand((int)time(0) * 10);
+				beeHeightOccilationTrigger = rand() % (vm.width + 1);
+
+				beeActive = true;
 			}
-			if (beeGoUp)
+			else // After first game loop, make the bee move
 			{
-				beeNewYCoordinate = spriteBee.getPosition().y + (0.5 * beeSpeed * dt.asSeconds());
+				// Bees always fly left
+				float beeNewXCoordinate = spriteBee.getPosition().x - (beeSpeed * dt.asSeconds());
 
-				if (beeNewYCoordinate > 1000)
+
+				// Make the bee oscillate up and down at random
+				float beeNewYCoordinate;
+				if (beeHeightOccillationCounter % beeHeightOccilationTrigger == 0)
 				{
-					beeNewYCoordinate = 1000.0f;
+					beeGoUp = !beeGoUp;
 				}
+				if (beeGoUp)
+				{
+					beeNewYCoordinate = spriteBee.getPosition().y + (0.5 * beeSpeed * dt.asSeconds());
+
+					if (beeNewYCoordinate > 1000)
+					{
+						beeNewYCoordinate = 1000.0f;
+					}
+				}
+				else
+				{
+					beeNewYCoordinate = spriteBee.getPosition().y - (0.5 * beeSpeed * dt.asSeconds());
+					if (beeNewYCoordinate < 500)
+					{
+						beeNewYCoordinate = 500.0f;
+					}
+				}
+				beeHeightOccillationCounter++;
+
+				spriteBee.setPosition(beeNewXCoordinate, beeNewYCoordinate);
+
+				// Has the bee reached the left-hand or upper edge of the screen?
+				if (spriteBee.getPosition().x < -100)
+				{
+					// Set it up to appear as a 'new' bee in the next frame
+					beeActive = false;
+					beeHeightOccillationCounter = 0;
+				}
+			}
+
+			// Cloud Animation ////////////////////////////////////////////////////
+
+			if (!cloud1Active)
+			{
+				srand((int)time(0) * 10); //.......................................Note that we use a different factor to ensure that the
+				cloud1Speed = (rand() % 200);                                   //.seed values for each speed and height is different.
+				//.If this had not been done, the clouds would overlap.
+				srand((int)time(0) * 10);
+				float height = (rand() % 150);
+				spriteCloud1.setPosition(-200, height);
+
+				cloud1Active = true;
 			}
 			else
 			{
-				beeNewYCoordinate = spriteBee.getPosition().y - (0.5 * beeSpeed * dt.asSeconds());
-				if (beeNewYCoordinate < 500)
-				{
-					beeNewYCoordinate = 500.0f;
-				}
+				spriteCloud1.setPosition(
+					spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()),
+					spriteCloud1.getPosition().y
+				);
 			}
-			beeHeightOccillationCounter++;
 
-			spriteBee.setPosition(beeNewXCoordinate, beeNewYCoordinate);
-
-			// Has the bee reached the left-hand or upper edge of the screen?
-			if (spriteBee.getPosition().x < -100)
+			if (!cloud2Active)
 			{
-				// Set it up to appear as a 'new' bee in the next frame
-				beeActive = false;
-				beeHeightOccillationCounter = 0;
+				srand((int)time(0) * 20);
+				cloud2Speed = (rand() % 200);
+
+				srand((int)time(0) * 20);
+				float height = (rand() % 150);
+				spriteCloud2.setPosition(-200, height);
+
+				cloud2Active = true;
 			}
-		}
+			else
+			{
+				spriteCloud2.setPosition(
+					spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()),
+					spriteCloud2.getPosition().y
+				);
+			}
 
-		// Cloud Animation ////////////////////////////////////////////////////
+			if (!cloud3Active)
+			{
+				srand((int)time(0) * 30);
+				cloud3Speed = (rand() % 200);
 
-		if (!cloud1Active)
-		{
-			srand((int)time(0) * 10); //.......................................Note that we use a different factor to ensure that the
-			cloud1Speed = (rand() % 200);                                   //.seed values for each speed and height is different.
-			                                                                //.If this had not been done, the clouds would overlap.
-			srand((int)time(0) * 10);                                        
-			float height = (rand() % 150);
-			spriteCloud1.setPosition(-200, height);
+				srand((int)time(0) * 30);
+				float height = (rand() % 150);
+				spriteCloud3.setPosition(-200, height);
 
-			cloud1Active = true;
-		}
-		else
-		{
-			spriteCloud1.setPosition(
-				spriteCloud1.getPosition().x + (cloud1Speed * dt.asSeconds()),
-				spriteCloud1.getPosition().y
-			);
-		}
+				cloud3Active = true;
+			}
+			else
+			{
+				spriteCloud3.setPosition(
+					spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()),
+					spriteCloud3.getPosition().y
+				);
+			}
 
-		if (!cloud2Active)
-		{
-			srand((int)time(0) * 20);
-			cloud2Speed = (rand() % 200);
+			if (spriteCloud1.getPosition().x > 1920)
+			{
+				cloud1Active = false;
+			}
 
-			srand((int)time(0) * 20);
-			float height = (rand() % 150);
-			spriteCloud2.setPosition(-200, height);
+			if (spriteCloud2.getPosition().x > 1920)
+			{
+				cloud2Active = false;
+			}
 
-			cloud2Active = true;
-		}
-		else
-		{
-			spriteCloud2.setPosition(
-				spriteCloud2.getPosition().x + (cloud2Speed * dt.asSeconds()),
-				spriteCloud2.getPosition().y
-			);
-		}
-
-		if (!cloud3Active)
-		{
-			srand((int)time(0) * 30);
-			cloud3Speed = (rand() % 200);
-
-			srand((int)time(0) * 30);
-			float height = (rand() % 150);
-			spriteCloud3.setPosition(-200, height);
-
-			cloud3Active = true;
-		}
-		else
-		{
-			spriteCloud3.setPosition(
-				spriteCloud3.getPosition().x + (cloud3Speed * dt.asSeconds()),
-				spriteCloud3.getPosition().y
-			);
-		}
-
-		if (spriteCloud1.getPosition().x > 1920)
-		{
-			cloud1Active = false;
-		}
-
-		if (spriteCloud2.getPosition().x > 1920)
-		{
-			cloud2Active = false;
-		}
-
-		if (spriteCloud3.getPosition().x > 1920)
-		{
-			cloud3Active = false;
+			if (spriteCloud3.getPosition().x > 1920)
+			{
+				cloud3Active = false;
+			}
 		}
 
 		/*
