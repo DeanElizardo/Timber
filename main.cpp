@@ -1,3 +1,4 @@
+#include <sstream>
 #include <SFML/Graphics.hpp>
 
 int main()
@@ -8,6 +9,15 @@ int main()
 	// Create a window object and give it the video mode, a title
 	// and a style parameter
 	sf::RenderWindow window(vm, "Timber!!!", sf::Style::Fullscreen);
+
+	/*
+	***************************************************************************
+	* Font
+	***************************************************************************
+	*/
+
+	sf::Font font;
+	font.loadFromFile("fonts/KOMIKAP_.ttf");
 
 	/*
 	***************************************************************************
@@ -76,9 +86,68 @@ int main()
 	*/
 
 	// Timing /////////////////////////////////////////////////////////////////
+	
 	sf::Clock clock;
 
 	bool paused = true;
+
+	// HUD ////////////////////////////////////////////////////////////////////
+
+	int score = 0;
+
+	// Talk to the player
+	sf::Text messageText;
+	messageText.setFont(font);
+	messageText.setCharacterSize(75);
+	messageText.setFillColor(sf::Color::White);
+	messageText.setString("Press ENTER to start!");
+	
+	// Let the player know how good they've done
+	sf::Text scoreText;
+	scoreText.setFont(font);
+	scoreText.setCharacterSize(100);
+	scoreText.setFillColor(sf::Color::White);
+	scoreText.setString("Score: 0");
+
+	// Let the player know what to do when the fun is done
+	sf::Text gameOverText;
+	gameOverText.setFont(font);
+	gameOverText.setCharacterSize(100);
+	gameOverText.setFillColor(sf::Color::White);
+	gameOverText.setString("Game Over! Press Enter to retry.");
+
+	// Position the text objects
+	sf::FloatRect messageTextRectangle = messageText.getLocalBounds();
+
+	// shift the origin of the messageText object to the middle of
+	// the rectangle that bounds messageText
+	messageText.setOrigin(
+		messageTextRectangle.left + messageTextRectangle.width / 2.0f,
+		messageTextRectangle.top + messageTextRectangle.height / 2.0f
+	);
+
+	sf::FloatRect gameOverTextRectangle = gameOverText.getLocalBounds();
+	gameOverText.setOrigin(
+		gameOverTextRectangle.left + gameOverTextRectangle.width / 2.0f,
+		gameOverTextRectangle.top + gameOverTextRectangle.height / 2.0f
+	);
+
+	messageText.setPosition(vm.width / 2.0f, vm.height / 2.0f);
+
+	gameOverText.setPosition(vm.width / 2.0f, vm.height / 2.0f);
+
+	scoreText.setPosition(20, 20);
+
+	sf::RectangleShape timeBar;
+	float timeBarStartWidth = 400.0f;
+	const float timeBarHeight = 80.0f;
+	timeBar.setSize(sf::Vector2f(timeBarStartWidth, timeBarHeight));
+	timeBar.setFillColor(sf::Color::Red);
+	timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
+
+	sf::Time gameTimeTotal;
+	float timeRemaining = 6.0f;
+	float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
 	// Bee ////////////////////////////////////////////////////////////////////
 
@@ -125,13 +194,20 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
 		{
 			paused = !paused;
+
+			if (timeRemaining <= 0)
+			{
+				score = 0;
+				timeRemaining = 6.0f;
+				messageText.setString("Press ENTER to start!");
+			}
 		}
 
 		if (!paused)
 		{
 			/*
 			***********************************************************************
-			* Update the scene
+			* Update the game state
 			***********************************************************************
 			*/
 
@@ -272,6 +348,20 @@ int main()
 			{
 				cloud3Active = false;
 			}
+
+			// Update the score ///////////////////////////////////////////////
+			std::stringstream scoreStream;
+			scoreStream << "Score: " << score;
+			scoreText.setString(scoreStream.str());
+
+			// Run the clock down /////////////////////////////////////////////
+			timeRemaining -= dt.asSeconds();
+			timeBar.setSize(sf::Vector2f(timeBarWidthPerSecond* timeRemaining, timeBarHeight));
+
+			if (timeRemaining <= 0)
+			{
+				paused = true;
+			}
 		}
 
 		/*
@@ -291,6 +381,17 @@ int main()
 		window.draw(spriteCloud3);
 		window.draw(spriteTree);
 		window.draw(spriteBee);
+		window.draw(scoreText);
+		window.draw(timeBar);
+
+		if (paused && timeRemaining > 0)
+		{
+			window.draw(messageText);
+		}
+		else if (paused && timeRemaining <= 0)
+		{
+			window.draw(gameOverText);
+		}
 
 		// Show the updated scene
 		window.display();
